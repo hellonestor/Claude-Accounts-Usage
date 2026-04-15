@@ -647,10 +647,41 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); }
 }
 .form-group input:focus, .form-group textarea:focus { border-color: var(--text); background: var(--bg); }
 .form-hint { font-size: 0.85rem; color: var(--text-subtle); }
+.form-hint-inline { color: var(--text-subtle); font-size: 0.85rem; font-weight: 400; }
 
-.tabs { display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; }
-.tab { font-size: 0.95rem; color: var(--text-muted); padding: 0.4rem 0.8rem; cursor: pointer; transition: color 0.2s; }
-.tab.is-active { color: var(--text); font-weight: 500; border-bottom: 2px solid var(--text); margin-bottom: -0.9rem; }
+.method-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.method-card {
+  display: flex; align-items: flex-start; gap: 0.8rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-panel);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.method-card:hover { border-color: var(--text-subtle); background: var(--bg); }
+.method-card input[type="radio"] {
+  appearance: none; -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border: 1.5px solid var(--text-subtle);
+  border-radius: 50%;
+  margin-top: 0.25rem;
+  flex-shrink: 0;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.15s;
+}
+.method-card input[type="radio"]:checked { border-color: var(--text); }
+.method-card input[type="radio"]:checked::after {
+  content: '';
+  position: absolute; top: 2px; left: 2px;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--text);
+}
+.method-card.is-selected { border-color: var(--text); background: var(--bg); }
+.method-title { font-weight: 500; font-size: 0.95rem; color: var(--text); }
+.method-desc { font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem; line-height: 1.4; }
+.method-tag { display: inline-block; font-size: 0.72rem; padding: 1px 6px; border-radius: 3px; background: var(--text); color: var(--bg); margin-left: 0.4rem; vertical-align: 1px; font-weight: 500; }
 
 .inline-input-wrap { display: flex; flex: 1; }
 .inline-input { width: 100%; border: 1px solid var(--border); border-radius: 4px; padding: 0.3rem 0.6rem; font-size: 0.95rem; font-family: var(--font-mono); background: var(--bg); }
@@ -839,44 +870,49 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); }
         <h2>添加账号</h2>
         <span class="dialog-close" data-close>✕</span>
       </div>
-      <div class="tabs">
-        <span class="tab is-active" data-tab="quick">格式导入</span>
-        <span class="tab" data-tab="browser">浏览器授权</span>
-        <span class="tab" data-tab="local">本地导入</span>
-        <span class="tab" data-tab="token">Token导入</span>
-      </div>
       <div class="dialog-body">
         <div class="form-group">
-          <label>本地别名</label>
-          <input type="text" id="addLabel" placeholder="选填，如留空则默认使用邮箱前缀" autocomplete="off" />
-        </div>
-        
-        <div class="tab-panel" data-panel="quick">
-          <div class="form-group">
-            <label>格式化账号数据</label>
-            <textarea id="addQuickData" placeholder="粘贴内容，如：Email----Password----两步验证码网址 https://haixiaohao.com/2fa/..." rows="4"></textarea>
-            <span class="form-hint">自动提取 邮箱----密码----2FA网址。解析后将自动配置凭据并模拟拉起登录。</span>
-          </div>
-          <div id="quickStatus" class="form-hint hidden" style="margin-top:0.8rem; color:var(--ok); font-weight:500;"></div>
+          <label>本地别名<span class="form-hint-inline"> (选填,留空自动用邮箱前缀)</span></label>
+          <input type="text" id="addLabel" placeholder="如 work / alice / backup" autocomplete="off" />
         </div>
 
-        <div class="tab-panel hidden" data-panel="browser">
-          <span class="form-hint">提交后将拉起浏览器进行 OAuth 登录。</span>
-          <div id="loginStatus" class="form-hint hidden" style="margin-top:0.6rem; color:var(--text);"></div>
-        </div>
-        <div class="tab-panel hidden" data-panel="local">
-          <span class="form-hint">尝试从 Claude Code 本地配置文件读取当前态。</span>
-        </div>
-        <div class="tab-panel hidden" data-panel="token">
-          <div class="form-group">
-            <label>Refresh Token</label>
-            <textarea id="addToken" placeholder="粘贴完整的 session token..." rows="3"></textarea>
+        <div class="form-group">
+          <label>登录方式</label>
+          <div class="method-list" id="methodList">
+            <label class="method-card is-selected">
+              <input type="radio" name="addMethod" value="browser" checked>
+              <div>
+                <div class="method-title">浏览器登录 <span class="method-tag">推荐</span></div>
+                <div class="method-desc">点击后在默认浏览器完成 Claude OAuth,登录态自动入库</div>
+              </div>
+            </label>
+            <label class="method-card">
+              <input type="radio" name="addMethod" value="local">
+              <div>
+                <div class="method-title">从本机 Claude Code 导入</div>
+                <div class="method-desc">读取 ~/.claude/.credentials.json 的登录态</div>
+              </div>
+            </label>
+            <label class="method-card">
+              <input type="radio" name="addMethod" value="token">
+              <div>
+                <div class="method-title">粘贴 refresh token</div>
+                <div class="method-desc">从别处拿到的 refresh token 直接导入</div>
+              </div>
+            </label>
           </div>
         </div>
+
+        <div class="form-group hidden" id="tokenInputWrap">
+          <label>Refresh Token</label>
+          <textarea id="addToken" placeholder="粘贴完整的 refresh token..." rows="3"></textarea>
+        </div>
+
+        <div id="loginStatus" class="form-hint hidden" style="margin-top:0.4rem;"></div>
       </div>
       <div class="dialog-footer">
         <button type="button" class="btn" data-close>取消</button>
-        <button type="submit" class="btn btn-primary" id="addSubmit">立即添加</button>
+        <button type="submit" class="btn btn-primary" id="addSubmit">确认添加</button>
       </div>
     </form>
   </dialog>
@@ -1404,64 +1440,113 @@ document.getElementById('confirmDelete').addEventListener('click', () => {
   document.getElementById('confirmDialog').close();
 });
 
-let activeTab = 'quick';
 document.getElementById('addBtn').addEventListener('click', () => {
   document.getElementById('addForm').reset();
-  document.getElementById('quickStatus').classList.add('hidden');
-  setTab('quick');
+  document.querySelector('input[name="addMethod"][value="browser"]').checked = true;
+  updateMethodSelection();
+  document.getElementById('loginStatus').classList.add('hidden');
+  document.getElementById('loginStatus').textContent = '';
   document.getElementById('addDialog').showModal();
 });
 document.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', e => e.target.closest('dialog').close()));
-document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => setTab(t.dataset.tab)));
-function setTab(tab) {
-  activeTab = tab;
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('is-active', t.dataset.tab === tab));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('hidden', p.dataset.panel !== tab));
+document.querySelectorAll('input[name="addMethod"]').forEach(r => r.addEventListener('change', updateMethodSelection));
+function getAddMethod() {
+  const r = document.querySelector('input[name="addMethod"]:checked');
+  return r ? r.value : 'browser';
+}
+function updateMethodSelection() {
+  const method = getAddMethod();
+  document.querySelectorAll('.method-card').forEach(c => {
+    c.classList.toggle('is-selected', c.querySelector('input').value === method);
+  });
+  document.getElementById('tokenInputWrap').classList.toggle('hidden', method !== 'token');
 }
 
-document.getElementById('addForm').addEventListener('submit', e => {
+let loginPollTimer = null;
+function stopLoginPoll() { if (loginPollTimer) { clearInterval(loginPollTimer); loginPollTimer = null; } }
+
+async function apiJson(url, opts = {}) {
+  const r = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(data.error || `HTTP ${r.status}`); e.payload = data; throw e; }
+  return data;
+}
+
+document.getElementById('addForm').addEventListener('submit', async e => {
   e.preventDefault();
   const submitBtn = document.getElementById('addSubmit');
+  const method = getAddMethod();
+  const label = document.getElementById('addLabel').value.trim();
+  const status = document.getElementById('loginStatus');
+  status.className = 'form-hint';
+  status.classList.remove('hidden');
 
-  if (activeTab === 'quick') {
-    const raw = document.getElementById('addQuickData').value.trim();
-    if (!raw) return toast('请输入账号数据');
-    
-    const parts = raw.split('----');
-    if (parts.length < 2) return toast('数据格式错误，请确保使用 ---- 分隔');
-
-    const email = parts[0].trim();
-    const pwd = parts[1].trim();
-    let twofa = '';
-    
-    if (parts.length >= 3) {
-      const urlMatch = parts[2].match(/(https?:\/\/[^\s]+)/);
-      twofa = urlMatch ? urlMatch[1] : parts[2].trim();
-    }
-
-    const labelInput = document.getElementById('addLabel').value.trim();
-    const label = labelInput || email.split('@')[0];
-
-    const statusEl = document.getElementById('quickStatus');
-    statusEl.classList.remove('hidden');
-    statusEl.textContent = `自动解析成功！邮箱: ${email}。正在拉起页面跳转登录...`;
-    submitBtn.disabled = true;
-
-    setTimeout(() => {
-      state.accounts.unshift({
-        label: label, email: email, googleEmail: email, googlePassword: pwd, twofaUrl: twofa,
-        tier: 'pro', five_hour: 0, seven_day: 0, tags: ['成员A'], addedAt: new Date().toISOString(), lastCheckedAt: new Date().toISOString()
+  submitBtn.disabled = true;
+  try {
+    if (method === 'browser') {
+      status.textContent = '正在启动浏览器 OAuth 流程...';
+      const { sessionId } = await apiJson('/api/accounts/login/start', {
+        method: 'POST',
+        body: JSON.stringify({ label: label || undefined }),
       });
-      toast('本地配置已补齐，账号已录入');
+      status.textContent = '已请求,等待服务端打开授权页面...';
+      stopLoginPoll();
+      let opened = false;
+      loginPollTimer = setInterval(async () => {
+        try {
+          const s = await apiJson('/api/accounts/login/' + sessionId);
+          if (s.status === 'pending') {
+            if (s.authUrl && !opened) {
+              opened = true;
+              window.open(s.authUrl, '_blank', 'noopener');
+              status.innerHTML = `浏览器未弹出?<a href="${s.authUrl}" target="_blank" rel="noopener" style="margin-left:0.4rem;">点此手动打开授权链接</a>`;
+            }
+          } else if (s.status === 'done') {
+            stopLoginPoll();
+            toast('账号已添加: ' + (s.result?.email || s.result?.label || ''));
+            document.getElementById('addDialog').close();
+            fetchAccounts();
+          } else if (s.status === 'error') {
+            stopLoginPoll();
+            status.style.color = 'var(--danger)';
+            status.textContent = '失败: ' + s.error;
+            submitBtn.disabled = false;
+          }
+        } catch (err) {
+          stopLoginPoll();
+          status.style.color = 'var(--danger)';
+          status.textContent = '轮询失败: ' + err.message;
+          submitBtn.disabled = false;
+        }
+      }, 1000);
+    } else if (method === 'local') {
+      status.textContent = '读取 ~/.claude/.credentials.json ...';
+      const acct = await apiJson('/api/accounts/import-local', {
+        method: 'POST',
+        body: JSON.stringify({ label: label || undefined }),
+      });
+      toast('已从本机导入: ' + (acct.email || acct.label));
       document.getElementById('addDialog').close();
-      submitBtn.disabled = false;
-      renderAll();
-    }, 1500);
-    return;
+      fetchAccounts();
+    } else {
+      const rt = document.getElementById('addToken').value.trim();
+      if (!rt) { status.style.color = 'var(--danger)'; status.textContent = '请粘贴 refresh token'; submitBtn.disabled = false; return; }
+      status.textContent = '正在验证 token ...';
+      const acct = await apiJson('/api/accounts/import-token', {
+        method: 'POST',
+        body: JSON.stringify({ label: label || undefined, refreshToken: rt }),
+      });
+      toast('已导入: ' + (acct.email || acct.label));
+      document.getElementById('addDialog').close();
+      fetchAccounts();
+    }
+  } catch (err) {
+    status.style.color = 'var(--danger)';
+    status.textContent = err.message;
+    submitBtn.disabled = false;
   }
-  toast('已提交添加请求');
-  document.getElementById('addDialog').close();
 });
+document.getElementById('addDialog').addEventListener('close', stopLoginPoll);
 
 document.getElementById('search').addEventListener('input', e => { state.filter.text = e.target.value.trim(); renderBoardMeta(); renderGrid(); });
 document.getElementById('sortSelect').addEventListener('change', e => { state.sort = e.target.value; renderBoardMeta(); renderGrid(); });

@@ -1,7 +1,7 @@
 {
   "name": "claude-accounts",
   "productName": "Claude 账号工作台",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Manage multiple Claude (Pro/Max) accounts and query 5h/7d usage from one place.",
   "private": true,
   "type": "module",

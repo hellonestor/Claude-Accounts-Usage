@@ -1,0 +1,14 @@
+{
+  "name": "claude-accounts",
+  "version": "0.1.0",
+  "description": "Manage multiple Claude (Pro/Max) accounts and query 5h/7d usage from one place.",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "claude-accounts": "./bin/claude-accounts.mjs"
+  },
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node ./bin/claude-accounts.mjs"
+  }
+}

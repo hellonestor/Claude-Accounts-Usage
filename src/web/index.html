@@ -1,0 +1,1512 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Claude 账号工作台</title>
+<style>
+/* 极简主义主题与重置 */
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --bg-panel: #fcfcfc;
+  --bg-hover: #f4f4f5;
+  --bg-card-hover: #f0f0f2;
+  --text: #0f172a;
+  --text-muted: #475569;
+  --text-subtle: #94a3b8;
+  --border: #e2e8f0;
+  --border-hover: #cbd5e1;
+  --primary: #0f172a;
+  --primary-text: #ffffff;
+  --ok: #10b981;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --radius: 8px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  /* 调整为更明亮、对比度更清晰的护眼配色 */
+  --bg: #121212;
+  --bg-panel: #1e1e1e;
+  --bg-hover: #2a2a2a;
+  --bg-card-hover: #262626;
+  --text: #ffffff; /* 字体更白，提升可读性 */
+  --text-muted: #d1d5db; /* 次级文字提亮 */
+  --text-subtle: #9ca3af;
+  --border: #333333;
+  --border-hover: #4b5563;
+  --primary: #f3f4f6;
+  --primary-text: #111827;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { min-height: 100%; }
+
+html {
+  font-size: 16px;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, textarea, select { 
+  font: inherit; 
+  color: inherit; 
+  background: none; 
+  border: none;
+  outline: none;
+}
+button { cursor: pointer; }
+a { color: var(--text); text-decoration: underline; text-underline-offset: 4px; }
+a:hover { color: var(--text-muted); }
+.hidden { display: none !important; }
+.mono { font-family: var(--font-mono); font-size: 0.9em; }
+
+/* 布局扩宽 */
+.layout {
+  max-width: calc(100vw - 2rem);
+  width: 2200px;
+  margin: 0 auto;
+  padding: 2.5rem 1rem 5rem;
+}
+
+/* 顶部导航 */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2.2rem;
+}
+.brand h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.brand p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-top: 0.4rem;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+/* 缩放小组件 */
+.zoom-widget {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+  overflow: hidden;
+  margin-right: 0.5rem;
+}
+.zoom-widget button {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+.zoom-widget button:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+.zoom-widget span {
+  padding: 0 0.5rem;
+  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  color: var(--text);
+  min-width: 4rem;
+  text-align: center;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+/* 按钮 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.4rem;
+  padding: 0.4rem 1.2rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  transition: all 0.2s ease;
+}
+.btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--border-hover);
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-text);
+  border-color: var(--primary);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--text-muted);
+  border-color: var(--text-muted);
+}
+.btn-danger {
+  color: var(--danger);
+  border-color: var(--border);
+}
+.btn-danger:hover:not(:disabled) {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+.btn-sm { min-height: 2rem; padding: 0.2rem 0.8rem; font-size: 0.85rem; }
+.btn-ghost { border-color: transparent; }
+.btn-ghost:hover { background: var(--bg-hover); }
+
+/* 主工作区结构 */
+.workspace {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 2.25rem;
+  align-items: start;
+}
+
+/* 侧边栏 */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  position: sticky;
+  top: 2.5rem;
+}
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.sidebar-title {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+.search-input {
+  width: 100%;
+  min-height: 2.8rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+.search-input:focus { border-color: var(--text); }
+
+.filter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.filter-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+.filter-btn:hover { background: var(--bg-hover); color: var(--text); }
+.filter-btn.is-active { background: var(--primary); color: var(--primary-text); }
+.filter-count { font-family: var(--font-mono); font-size: 0.85rem; opacity: 0.6; }
+.filter-btn.is-active .filter-count { opacity: 1; }
+
+/* 列表区 */
+.board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.board-meta { font-size: 0.95rem; color: var(--text-muted); }
+.board-tools select {
+  min-height: 2.5rem;
+  padding: 0.3rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  background: var(--bg);
+}
+.board-tools select:focus { border-color: var(--text); }
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.empty-state {
+  padding: 5rem 0;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+/* 账号卡片 - 折叠式单行布局 */
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel); 
+  padding: 1.2rem 1.5rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+.card:hover { 
+  background-color: var(--bg-card-hover);
+  border-color: var(--text-subtle); 
+  transform: translateY(-2px);
+}
+.card.is-expanded {
+  padding: 1.5rem;
+  background-color: var(--bg-hover);
+}
+
+.card-header-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 1.5rem;
+  row-gap: 0.9rem;
+}
+.ch-left {
+  display: grid;
+  grid-template-columns: 1.5rem auto minmax(0, max-content) auto minmax(8rem, 1fr);
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+  justify-content: start;
+}
+.ch-right {
+  display: grid;
+  grid-template-columns: minmax(34rem, auto) auto;
+  align-items: center;
+  gap: 1.5rem;
+  justify-content: end;
+  min-width: 0;
+}
+
+.expand-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  transition: transform 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+  pointer-events: none;
+  padding: 0;
+}
+.expand-btn svg { width: 14px; height: 14px; display: block; }
+.card:hover .expand-btn { color: var(--text); }
+.expand-btn.is-expanded { transform: rotate(90deg); color: var(--text); }
+
+.badge-tier {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.badge-tier.tier-max { color: #d4a94f; }
+.badge-tier.tier-pro { color: #7dd3fc; }
+.badge-tier.tier-free { color: var(--text); }
+.card-email {
+  display: inline-block;
+  min-width: 0;
+  max-width: 18rem;
+  width: max-content;
+  font-size: 1.15rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+.card-alias {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem 0.6rem;
+  max-width: 9rem;
+  background: color-mix(in srgb, #2563eb 10%, var(--bg));
+  border: 1px solid color-mix(in srgb, #2563eb 18%, var(--border));
+  border-radius: 999px;
+  font-size: 0.8rem;
+  color: color-mix(in srgb, #2563eb 75%, var(--text));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 使用成员（内联标签） */
+.members-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  padding-left: 0.5rem;
+  border-left: 1px solid var(--border);
+  min-width: 0;
+}
+.members-inline::-webkit-scrollbar { display: none; }
+.member-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.7rem;
+  background: color-mix(in srgb, #059669 10%, var(--bg));
+  border: 1px solid color-mix(in srgb, #059669 18%, var(--border));
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: color-mix(in srgb, #059669 72%, var(--text));
+  white-space: nowrap;
+}
+.member-tag-rm { margin-left: 0.5rem; cursor: pointer; opacity: 0.4; }
+.member-tag-rm:hover { opacity: 1; color: var(--text); }
+.member-add-btn {
+  padding: 0.2rem 0.7rem;
+  border: 1px dashed var(--border);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--text-subtle);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.member-add-btn:hover { background: var(--bg); color: var(--text); border-color: var(--text-subtle); }
+
+/* 右侧迷你状态 */
+.mini-status-wrap {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  min-width: 34rem;
+  /* border: 1px solid color-mix(in srgb, var(--border) 82%, transparent); */
+  border-radius: 6px;
+  overflow: hidden;
+}
+.mini-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.32rem 0.75rem;
+  white-space: nowrap;
+  min-width: 0;
+  border-right: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+.mini-stat:last-child { border-right: 0; }
+.mini-stat strong {
+  color: var(--text);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mini-stat-reset strong {
+  font-weight: 500;
+}
+.mini-usage-bar {
+  width: 64px;
+  height: 6px;
+  background: var(--bg);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.mini-usage-fill {
+  height: 100%;
+  background: var(--text);
+  transition: width 0.3s;
+}
+.card.is-expanded .mini-status-wrap { display: none; }
+
+.card-actions {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  gap: 0.6rem;
+  justify-content: end;
+}
+
+/* 展开后的主体内容 */
+.card-expandable {
+  display: none;
+}
+.card.is-expanded .card-expandable {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: stretch; /* 保证左右两边高度一致 */
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--border);
+}
+
+.usage-list, .vault-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  padding: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg) 74%, var(--bg-panel));
+  height: 100%; /* 撑满等高布局 */
+}
+.usage-item { font-size: 0.95rem; }
+.usage-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+  color: var(--text-muted);
+}
+.usage-header strong { color: var(--text); font-weight: 500; font-size: 1rem; }
+.usage-track {
+  height: 0.35rem;
+  background: var(--bg-panel);
+  border-radius: 3px;
+  overflow: hidden;
+}
+[data-theme="dark"] .usage-track { background: var(--border); }
+.usage-track > i {
+  display: block;
+  height: 100%;
+  background: var(--text);
+  border-radius: 3px;
+}
+.usage-track.is-warn > i { background: var(--warn); }
+.usage-track.is-danger > i { background: var(--danger); }
+.usage-meta { font-size: 0.8rem; color: var(--text-subtle); margin-top: 0.4rem; }
+
+.vault-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--border) 80%, transparent);
+}
+.vault-item:last-child { border-bottom: none; }
+.vault-label { color: var(--text-muted); width: 4.5rem; flex-shrink: 0; }
+.vault-value { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vault-value.is-empty { color: var(--text-subtle); font-style: italic; }
+.vault-actions { display: flex; gap: 0.8rem; margin-left: 1rem; }
+
+.inline-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+.inline-action:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+  border-color: var(--border-hover);
+}
+
+/* 备忘录内联样式 */
+.note-item {
+  flex-direction: column;
+  align-items: stretch;
+  border-bottom: none;
+  margin-top: auto; /* 推到最底部 */
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border);
+}
+.note-display {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  padding: 0.8rem;
+  background: var(--bg-panel);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  white-space: pre-wrap;
+  min-height: 48px;
+  margin-top: 0.5rem;
+}
+.note-input {
+  width: 100%;
+  min-height: 60px;
+  padding: 0.8rem;
+  font-size: 0.9rem;
+  border: 1px solid var(--border-hover);
+  border-radius: 6px;
+  background: var(--bg-panel);
+  resize: vertical;
+  margin-top: 0.5rem;
+  color: var(--text);
+}
+.note-input:focus { border-color: var(--text); }
+
+.card-footer {
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--text-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  grid-column: 1 / -1;
+}
+.card-footer-meta { display: inline-flex; gap: 1.2rem; flex-wrap: wrap; }
+.card-footer-actions { display: inline-flex; gap: 0.4rem; }
+
+/* 弹窗与表单 */
+dialog {
+  margin: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  width: 100%;
+  max-width: 36rem;
+  color: inherit;
+}
+dialog::backdrop { background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); }
+.dialog-content {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+  padding: 2rem;
+}
+.dialog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+.dialog-header h2 { font-size: 1.25rem; font-weight: 500; }
+.dialog-close { cursor: pointer; color: var(--text-muted); font-size: 1.25rem; }
+.dialog-close:hover { color: var(--text); }
+.dialog-body { display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 2rem; }
+.dialog-footer { display: flex; justify-content: flex-end; gap: 1rem; }
+
+.form-group { display: flex; flex-direction: column; gap: 0.8rem; }
+.form-group label { font-size: 0.95rem; font-weight: 500; }
+.form-group input, .form-group textarea {
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  background: var(--bg-panel);
+}
+.form-group input:focus, .form-group textarea:focus { border-color: var(--text); background: var(--bg); }
+.form-hint { font-size: 0.85rem; color: var(--text-subtle); }
+
+.tabs { display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; }
+.tab { font-size: 0.95rem; color: var(--text-muted); padding: 0.4rem 0.8rem; cursor: pointer; transition: color 0.2s; }
+.tab.is-active { color: var(--text); font-weight: 500; border-bottom: 2px solid var(--text); margin-bottom: -0.9rem; }
+
+.inline-input-wrap { display: flex; flex: 1; }
+.inline-input { width: 100%; border: 1px solid var(--border); border-radius: 4px; padding: 0.3rem 0.6rem; font-size: 0.95rem; font-family: var(--font-mono); background: var(--bg); }
+.inline-input:focus { border-color: var(--text); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 3rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  padding: 0.8rem 1.5rem;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.95rem;
+  border-radius: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* 响应式 */
+@media (max-width: 1024px) {
+  .workspace { grid-template-columns: 1fr; }
+  .sidebar { position: static; flex-direction: row; flex-wrap: wrap; }
+  .sidebar-section { flex: 1; min-width: 200px; }
+  .metrics { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .layout { padding: 1.5rem 1rem 4rem; width: 100%; max-width: 100%; }
+  .metrics { grid-template-columns: 1fr; }
+  .card-expandable { grid-template-columns: 1fr; }
+  .card-header-row { grid-template-columns: 1fr; }
+  .ch-left { grid-template-columns: 1fr; }
+  .ch-right { grid-template-columns: 1fr; justify-content: stretch; }
+  .mini-status-wrap { grid-template-columns: 1fr; min-width: 0; }
+  .card-actions { justify-content: flex-start; }
+}
+
+/* 标签选择框 */
+.tag-popover { position: relative; display: inline-block; }
+.tag-popover-panel {
+  position: absolute;
+  top: 100%; left: 0;
+  margin-top: 0.4rem;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.8rem;
+  width: 16rem;
+  z-index: 10;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+.tag-popover-panel input { width: 100%; padding: 0.4rem 0.8rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.85rem; margin-bottom: 0.8rem; }
+.tag-list-popover { display: flex; flex-wrap: wrap; gap: 0.4rem; max-height: 8rem; overflow-y: auto; }
+.tag-suggest { font-size: 0.85rem; padding: 0.3rem 0.6rem; background: var(--bg); border-radius: 4px; cursor: pointer; border: 1px solid var(--border); }
+.tag-suggest:hover { background: var(--border-hover); color: var(--text); }
+</style>
+</head>
+<body>
+  <div class="layout">
+    <header class="header">
+      <div class="brand">
+        <h1>Claude Accounts</h1>
+        <p>本地化凭据管理与状态监控面板</p>
+      </div>
+      <div class="header-actions">
+        <div class="zoom-widget">
+          <button id="zoomOutBtn" title="缩小全局字号">A-</button>
+          <span id="zoomLevel">100%</span>
+          <button id="zoomInBtn" title="放大全局字号">A+</button>
+        </div>
+        <button class="btn btn-ghost" id="themeBtn">切换主题</button>
+        <button class="btn" id="refreshBtn">刷新状态</button>
+      </div>
+    </header>
+
+<div id="banner429" class="banner banner-danger hidden">
+      <span class="banner-dot"></span>
+      <div>
+        <strong>检测到 API 限流 (429)</strong><br>
+        <span id="banner429-detail"></span>
+      </div>
+    </div>
+    <div id="bannerCache" class="banner banner-info hidden">
+      <span class="banner-dot"></span>
+      <div>当前为缓存模式，页面展示的是最近一次的抓取结果。</div>
+    </div>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <div class="sidebar-section">
+          <div class="sidebar-title">搜索</div>
+          <input type="search" id="search" class="search-input" placeholder="邮箱 / 别名 / 成员..." autocomplete="off">
+        </div>
+        
+        <div class="sidebar-section">
+          <div class="sidebar-title">状态</div>
+          <div class="filter-list" id="statusFilter"></div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-title">使用成员</div>
+          <div class="filter-list" id="tagFilter" style="flex-direction: row; flex-wrap: wrap; gap: 0.4rem;"></div>
+        </div>
+      </aside>
+
+      <main>
+        <div class="board-header">
+          <div class="board-meta" id="resultMeta">加载中...</div>
+          <div class="board-tools">
+            <select id="sortSelect">
+              <option value="recent">按最新添加排序</option>
+              <option value="load">按负载均衡(剩余用量最多)排序</option>
+            </select>
+            <button class="btn btn-sm btn-ghost hidden" id="clearFilterBtn" style="margin-left:0.8rem;">清除筛选</button>
+            <button class="btn btn-primary btn-sm" id="addBtn" style="margin-left:0.8rem;">添加账号</button>
+          </div>
+        </div>
+
+        <div class="grid" id="grid"></div>
+        <div id="empty" class="empty-state hidden">没有匹配的账号</div>
+      </main>
+    </div>
+  </div>
+
+  <!-- 弹窗结构 -->
+  <dialog id="addDialog">
+    <form method="dialog" class="dialog-content" id="addForm">
+      <div class="dialog-header">
+        <h2>添加账号</h2>
+        <span class="dialog-close" data-close>✕</span>
+      </div>
+      <div class="tabs">
+        <span class="tab is-active" data-tab="quick">格式导入</span>
+        <span class="tab" data-tab="browser">浏览器授权</span>
+        <span class="tab" data-tab="local">本地导入</span>
+        <span class="tab" data-tab="token">Token导入</span>
+      </div>
+      <div class="dialog-body">
+        <div class="form-group">
+          <label>本地别名</label>
+          <input type="text" id="addLabel" placeholder="选填，如留空则默认使用邮箱前缀" autocomplete="off" />
+        </div>
+        
+        <div class="tab-panel" data-panel="quick">
+          <div class="form-group">
+            <label>格式化账号数据</label>
+            <textarea id="addQuickData" placeholder="粘贴内容，如：Email----Password----两步验证码网址 https://haixiaohao.com/2fa/..." rows="4"></textarea>
+            <span class="form-hint">自动提取 邮箱----密码----2FA网址。解析后将自动配置凭据并模拟拉起登录。</span>
+          </div>
+          <div id="quickStatus" class="form-hint hidden" style="margin-top:0.8rem; color:var(--ok); font-weight:500;"></div>
+        </div>
+
+        <div class="tab-panel hidden" data-panel="browser">
+          <span class="form-hint">提交后将拉起浏览器进行 OAuth 登录。</span>
+          <div id="loginStatus" class="form-hint hidden" style="margin-top:0.6rem; color:var(--text);"></div>
+        </div>
+        <div class="tab-panel hidden" data-panel="local">
+          <span class="form-hint">尝试从 Claude Code 本地配置文件读取当前态。</span>
+        </div>
+        <div class="tab-panel hidden" data-panel="token">
+          <div class="form-group">
+            <label>Refresh Token</label>
+            <textarea id="addToken" placeholder="粘贴完整的 session token..." rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button type="button" class="btn" data-close>取消</button>
+        <button type="submit" class="btn btn-primary" id="addSubmit">立即添加</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="confirmDialog">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h2>确认删除</h2>
+        <span class="dialog-close" data-close>✕</span>
+      </div>
+      <div class="dialog-body">
+        <p>确认要从本地移除账号 <b class="mono" id="confirmLabel"></b> 吗？</p>
+        <p class="form-hint">这只会删除本地保存的凭据和备注，不会影响服务器端。</p>
+      </div>
+      <div class="dialog-footer">
+        <button type="button" class="btn" data-close>取消</button>
+        <button type="button" class="btn btn-danger" id="confirmDelete">确认删除</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast"></div>
+
+<script>
+// =====================================
+// 全局默认字号配置 (单位: px)
+const CUSTOM_DEFAULT_FONT_SIZE = 19; 
+// =====================================
+
+// 字号缩放逻辑
+let currentFontSize = parseInt(localStorage.getItem('claude-accounts.fontSize')) || CUSTOM_DEFAULT_FONT_SIZE;
+
+function applyFontSize() {
+  document.documentElement.style.fontSize = currentFontSize + 'px';
+  const pct = Math.round((currentFontSize / CUSTOM_DEFAULT_FONT_SIZE) * 100);
+  const zoomLevelEl = document.getElementById('zoomLevel');
+  if (zoomLevelEl) zoomLevelEl.textContent = pct + '%';
+}
+
+document.getElementById('zoomInBtn').addEventListener('click', () => {
+  currentFontSize += 1;
+  localStorage.setItem('claude-accounts.fontSize', currentFontSize);
+  applyFontSize();
+});
+
+document.getElementById('zoomOutBtn').addEventListener('click', () => {
+  currentFontSize = Math.max(12, currentFontSize - 1); 
+  localStorage.setItem('claude-accounts.fontSize', currentFontSize);
+  applyFontSize();
+});
+
+applyFontSize();
+
+// 核心状态管理
+const state = {
+  accounts: [],
+  filter: { text: '', tags: new Set(), status: 'all' },
+  sort: 'recent', // 默认最新添加
+  theme: 'dark',
+  refreshCooldownUntil: 0,
+  cacheMode: false,
+  isFetching: false,
+  loadError: '',
+  expandedCards: new Set() // 记录折叠状态
+};
+
+const LS_THEME = 'claude-accounts.theme';
+const LS_COOLDOWN = 'claude-accounts.refreshCooldownUntil';
+const COOLDOWN_MS = 5 * 60 * 1000;
+
+const STATUS_META = {
+  all: { label: '全部状态' },
+  ok: { label: '正常', className: 'ok' },
+  warn: { label: '负载偏高', className: 'warn' },
+  danger: { label: '临界高危', className: 'danger' },
+  neutral: { label: '无数据', className: 'neutral' },
+};
+
+const USAGE_FIELDS = [
+  { key: 'five_hour', label: '5小时', resetKey: 'five_hour_resets' },
+  { key: 'seven_day', label: '7天', resetKey: 'seven_day_resets' },
+  { key: 'seven_day_opus', label: '7天 Opus', resetKey: null },
+  { key: 'seven_day_sonnet', label: '7天 Sonnet', resetKey: 'seven_day_sonnet_resets' },
+];
+
+function initTheme() {
+  const stored = localStorage.getItem(LS_THEME);
+  const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+  state.theme = stored || (prefersDark ? 'dark' : 'light');
+  applyTheme();
+}
+
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', state.theme);
+}
+
+document.getElementById('themeBtn').addEventListener('click', () => {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem(LS_THEME, state.theme);
+  applyTheme();
+});
+
+function initCooldown() {
+  const until = parseInt(localStorage.getItem(LS_COOLDOWN) || '0', 10);
+  if (!Number.isNaN(until) && until > Date.now()) state.refreshCooldownUntil = until;
+  tickCooldown();
+  setInterval(tickCooldown, 1000);
+}
+
+function startCooldown(ms = COOLDOWN_MS) {
+  const until = Date.now() + ms;
+  if (until > state.refreshCooldownUntil) {
+    state.refreshCooldownUntil = until;
+    localStorage.setItem(LS_COOLDOWN, String(until));
+  }
+  tickCooldown();
+}
+
+function cooldownRemainingMs() { return Math.max(0, state.refreshCooldownUntil - Date.now()); }
+
+function tickCooldown() {
+  const btn = document.getElementById('refreshBtn');
+  const rem = cooldownRemainingMs();
+  if (state.isFetching) {
+    btn.disabled = true; btn.textContent = '刷新中...';
+  } else if (rem > 0) {
+    btn.disabled = true;
+    const mm = String(Math.floor(rem / 60000));
+    const ss = String(Math.floor((rem % 60000) / 1000)).padStart(2, '0');
+    btn.textContent = `冷却 ${mm}:${ss}`;
+  } else {
+    btn.disabled = false; btn.textContent = '刷新状态';
+  }
+}
+
+document.getElementById('refreshBtn').addEventListener('click', () => {
+  if (state.isFetching || cooldownRemainingMs() > 0) return;
+  startCooldown();
+  fetchAccounts(true);
+});
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+async function api(url, opts = {}) {
+  if (url === '/api/accounts' && opts.method !== 'POST' && opts.method !== 'PATCH' && opts.method !== 'DELETE') {
+    return {
+      accounts: [
+        { label: 'work-main', email: 'hello@example.com', tier: 'pro', five_hour: 88, seven_day: 40, tags: ['work'], googleEmail: 'hello@example.com', addedAt: new Date().toISOString(), lastCheckedAt: new Date().toISOString() },
+        { label: 'backup-1', email: 'test@example.com', tier: 'free', five_hour: 10, tags: ['backup'], addedAt: new Date().toISOString(), lastCheckedAt: new Date().toISOString() }
+      ]
+    };
+  }
+  return {};
+}
+
+let firstLoad = true;
+async function fetchAccounts(showToast = false) {
+  state.isFetching = true; tickCooldown();
+  try {
+    const data = await api('/api/accounts');
+    state.accounts = data.accounts || [];
+    state.loadError = '';
+    detectRateLimit();
+    detectCacheMode();
+    renderAll();
+    if (showToast) toast('已刷新');
+    firstLoad = false;
+  } catch (e) {
+    if (firstLoad) { state.loadError = e.message; renderAll(); }
+    else { toast('刷新失败: ' + e.message); }
+  } finally {
+    state.isFetching = false; tickCooldown();
+  }
+}
+
+function detectRateLimit() {
+  const limited = state.accounts.filter(a => isRateLimitedError(a));
+  const banner = document.getElementById('banner429');
+  if (!limited.length) { banner.classList.add('hidden'); return; }
+  banner.classList.remove('hidden');
+  document.getElementById('banner429-detail').textContent = `涉及账号：${limited.map(a => a.label).join(', ')}`;
+}
+
+function detectCacheMode() {
+  state.cacheMode = state.accounts.length > 0 && state.accounts.every(a => a.cached);
+  document.getElementById('bannerCache').classList.toggle('hidden', !state.cacheMode);
+}
+
+function renderAll() {
+  renderStatusFilter();
+  renderTagFilter();
+  renderBoardMeta();
+  renderGrid();
+}
+
+function renderStatusFilter() {
+  const counts = countStatuses(state.accounts);
+  const entries = [['all', state.accounts.length], ['danger', counts.danger], ['warn', counts.warn], ['ok', counts.ok], ['neutral', counts.neutral]];
+  document.getElementById('statusFilter').innerHTML = entries.map(([k, c]) => `
+    <button class="filter-btn ${state.filter.status === k ? 'is-active' : ''}" data-status="${k}">
+      <span>${STATUS_META[k].label}</span>
+      <span class="filter-count">${c}</span>
+    </button>
+  `).join('');
+  document.querySelectorAll('[data-status]').forEach(el => {
+    el.addEventListener('click', () => { state.filter.status = el.dataset.status; renderAll(); });
+  });
+}
+
+function renderTagFilter() {
+  const c = new Map();
+  state.accounts.forEach(a => (a.tags || []).forEach(t => c.set(t, (c.get(t) || 0) + 1)));
+  if (!c.size) { document.getElementById('tagFilter').innerHTML = '<span class="form-hint">无使用成员</span>'; return; }
+  
+  const tags = [...c.entries()].sort((a, b) => b[1] - a[1]);
+  document.getElementById('tagFilter').innerHTML = tags.map(([t, count]) => `
+    <button class="tag ${state.filter.tags.has(t) ? 'is-active' : ''}" data-tag="${escapeAttr(t)}" style="${state.filter.tags.has(t) ? 'background:var(--text);color:var(--bg)' : ''}">
+      ${escapeHtml(t)} <span class="filter-count" style="margin-left:0.4rem">${count}</span>
+    </button>
+  `).join('');
+  document.querySelectorAll('[data-tag]').forEach(el => {
+    el.addEventListener('click', () => {
+      const t = el.dataset.tag;
+      state.filter.tags.has(t) ? state.filter.tags.delete(t) : state.filter.tags.add(t);
+      renderAll();
+    });
+  });
+}
+
+function renderBoardMeta() {
+  const vis = getVisibleAccounts();
+  document.getElementById('resultMeta').textContent = `显示 ${vis.length} 个账号 (共 ${state.accounts.length})`;
+  const hasFilter = state.filter.text || state.filter.status !== 'all' || state.filter.tags.size > 0;
+  document.getElementById('clearFilterBtn').classList.toggle('hidden', !hasFilter);
+}
+
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('empty');
+  const list = getVisibleAccounts();
+  grid.innerHTML = '';
+  if (!list.length) { empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  list.forEach(a => grid.appendChild(createCard(a)));
+}
+
+function createCard(account) {
+  const isExpanded = state.expandedCards.has(account.label);
+  const card = el('div', `card ${isExpanded ? 'is-expanded' : ''}`);
+  card.id = toDomId(account.label);
+  
+  // Header Row
+  const hourUsage = normalizedPercent(account.five_hour);
+  const weekUsage = normalizedPercent(account.seven_day);
+  const hourUsageLvl = levelForPercent(hourUsage);
+  const weekUsageLvl = levelForPercent(weekUsage);
+  
+  const reset5h = formatCompactTime(account.five_hour_resets);
+  const reset7d = formatCompactTime(account.seven_day_resets);
+  const resetDisplay = (reset5h === '-' && reset7d === '-') ? '-' : `${reset5h} / ${reset7d}`;
+  
+  const tagsHtml = (account.tags || []).map(t => `<span class="member-tag">${escapeHtml(t)} <span class="member-tag-rm" data-tag="${escapeAttr(t)}">✕</span></span>`).join('');
+  
+  const header = el('div', 'card-header-row');
+  header.innerHTML = `
+    <div class="ch-left">
+      <button class="expand-btn ${isExpanded ? 'is-expanded' : ''}" title="展开/收起" aria-label="展开/收起"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5.5 3.5 10.5 8 5.5 12.5"></polyline></svg></button>
+      ${account.tier ? `<span class="badge-tier tier-${escapeAttr(String(account.tier).toLowerCase())}">${formatTier(account.tier)}</span>` : ''}
+      <span class="card-email mono">${escapeHtml(account.email || '未知邮箱')}</span>
+      <span class="card-alias js-alias mono">${escapeHtml(account.label)}</span>
+      <div class="members-inline js-tags-container">
+        ${tagsHtml}
+        <button class="member-add-btn js-add-tag">+ 成员</button>
+      </div>
+    </div>
+    <div class="ch-right">
+      <div class="mini-status-wrap">
+        <span class="mini-stat">
+          <span>小时用量</span>
+          <strong>${hourUsage == null ? '-' : Math.round(hourUsage) + '%'}</strong>
+          <div class="mini-usage-bar"><div class="mini-usage-fill" style="width: ${hourUsage == null ? 0 : Math.min(100, hourUsage)}%; background: var(--${hourUsageLvl === 'ok' ? 'text' : hourUsageLvl})"></div></div>
+        </span>
+        <span class="mini-stat">
+          <span>周用量</span>
+          <strong>${weekUsage == null ? '-' : Math.round(weekUsage) + '%'}</strong>
+          <div class="mini-usage-bar"><div class="mini-usage-fill" style="width: ${weekUsage == null ? 0 : Math.min(100, weekUsage)}%; background: var(--${weekUsageLvl === 'ok' ? 'text' : weekUsageLvl})"></div></div>
+        </span>
+        <span class="mini-stat mini-stat-reset">
+          <span>下次重置</span>
+          <strong>${resetDisplay}</strong>
+        </span>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-sm btn-ghost js-copy-all">复制</button>
+      </div>
+    </div>
+  `;
+
+  // Header Interactions
+  const toggleCardExpanded = () => {
+    const expanding = card.classList.toggle('is-expanded');
+    header.querySelector('.expand-btn').classList.toggle('is-expanded', expanding);
+    if (expanding) state.expandedCards.add(account.label);
+    else state.expandedCards.delete(account.label);
+  };
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('button, a, input, textarea, select, .member-tag-rm, .tag-popover-panel')) return;
+    toggleCardExpanded();
+  });
+  
+  header.querySelector('.js-add-tag').addEventListener('click', (e) => {
+    e.stopPropagation();
+    showTagPopover(e.currentTarget, account);
+  });
+  header.querySelectorAll('.member-tag-rm').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      updateTags(account, (account.tags||[]).filter(x => x !== btn.dataset.tag));
+    });
+  });
+
+  header.querySelector('.js-copy-all').addEventListener('click', async () => {
+    const lines = [`Email: ${account.googleEmail || ''}`, `密码: ${account.googlePassword || ''}`, `2FA: ${account.twofaUrl || ''}`].join('\n');
+    try { await navigator.clipboard.writeText(lines); toast('已复制凭据'); } catch { toast('复制失败'); }
+  });
+
+  // Expandable Body
+  const expandable = el('div', 'card-expandable');
+  
+  // Usage List
+  const usageDiv = el('div', 'usage-list');
+  USAGE_FIELDS.forEach(f => {
+    const pct = normalizedPercent(account[f.key]);
+    const lvl = levelForPercent(pct);
+    const item = el('div', 'usage-item');
+    item.innerHTML = `
+      <div class="usage-header">
+        <span>${f.label}</span>
+        <strong>${pct == null ? '-' : Math.round(pct) + '%'}</strong>
+      </div>
+      <div class="usage-track is-${lvl}"><i style="width:${pct == null ? 0 : Math.min(100, pct)}%"></i></div>
+      <div class="usage-meta">${account[f.resetKey] ? `下次重置 ${relativeTime(account[f.resetKey], true)} · ${formatDateTime(account[f.resetKey])}` : '暂无重置时间'}</div>
+    `;
+    usageDiv.appendChild(item);
+  });
+
+  // Vault List & Note
+  const vaultDiv = el('div', 'vault-list');
+  const addVaultRow = (key, label, type) => {
+    const row = el('div', 'vault-item');
+    const val = account[key];
+    const hasVal = !!val;
+    row.innerHTML = `
+      <span class="vault-label">${label}</span>
+      <div class="vault-value mono ${!hasVal ? 'is-empty' : ''} js-val" data-real="${escapeAttr(val||'')}">
+        ${!hasVal ? '未配置' : (type === 'pwd' ? '••••••••' : escapeHtml(val))}
+      </div>
+      <div class="vault-actions">
+        ${hasVal && type === 'pwd' ? '<button type="button" class="inline-action js-show">显示</button>' : ''}
+        ${hasVal ? '<button type="button" class="inline-action js-copy">复制</button>' : ''}
+        ${hasVal && key === 'twofaUrl' ? '<a class="inline-action js-open" target="_blank" rel="noopener">访问</a>' : ''}
+        <button type="button" class="inline-action js-edit">${hasVal ? '编辑' : '添加'}</button>
+      </div>
+    `;
+    if (hasVal && type === 'pwd') {
+      const showBtn = row.querySelector('.js-show');
+      const valEl = row.querySelector('.js-val');
+      showBtn.addEventListener('click', () => {
+        const isMasked = valEl.textContent.includes('•');
+        valEl.textContent = isMasked ? valEl.dataset.real : '••••••••';
+        showBtn.textContent = isMasked ? '隐藏' : '显示';
+      });
+    }
+    if (hasVal) row.querySelector('.js-copy').addEventListener('click', () => { navigator.clipboard.writeText(val).then(() => toast('已复制')); });
+    if (hasVal && key === 'twofaUrl') row.querySelector('.js-open').href = val;
+    row.querySelector('.js-edit').addEventListener('click', () => editField(row, account, key, label));
+    vaultDiv.appendChild(row);
+  };
+  addVaultRow('googleEmail', 'Email', 'text');
+  addVaultRow('googlePassword', '密码', 'pwd');
+  addVaultRow('twofaUrl', '2FA', 'text');
+
+  // Inline Note inside vault list
+  const noteRow = el('div', 'vault-item note-item');
+  noteRow.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span class="vault-label">备忘录</span>
+      <button type="button" class="inline-action js-edit-note">编辑</button>
+    </div>
+    <div class="note-display js-note-text">${escapeHtml(account.note || '暂无内容...')}</div>
+  `;
+  noteRow.querySelector('.js-edit-note').addEventListener('click', () => {
+    const display = noteRow.querySelector('.js-note-text');
+    if(noteRow.querySelector('textarea')) return;
+    const ta = el('textarea', 'note-input');
+    ta.value = account.note || '';
+    noteRow.replaceChild(ta, display);
+    ta.focus();
+    const finish = () => {
+      account.note = ta.value;
+      toast('备注已保存');
+      renderAll(); 
+    };
+    ta.addEventListener('blur', finish);
+  });
+  vaultDiv.appendChild(noteRow);
+
+  // Footer inside expandable
+  const footer = el('div', 'card-footer');
+  footer.innerHTML = `
+    <span class="card-footer-meta">
+      <span>添加于: ${formatDate(account.addedAt)}</span>
+      <span>同步: ${relativeTime(account.lastCheckedAt)}</span>
+    </span>
+    <span class="card-footer-actions">
+      <button type="button" class="btn btn-sm btn-ghost js-rename">改名</button>
+      <button type="button" class="btn btn-sm btn-ghost js-delete" style="color:var(--danger)">移除</button>
+    </span>
+  `;
+  footer.querySelector('.js-rename').addEventListener('click', () => beginRename(card, account));
+  footer.querySelector('.js-delete').addEventListener('click', () => confirmDelete(account));
+
+  expandable.appendChild(usageDiv);
+  expandable.appendChild(vaultDiv);
+  expandable.appendChild(footer);
+
+  card.appendChild(header);
+  card.appendChild(expandable);
+  return card;
+}
+
+// 辅助渲染功能
+function beginRename(card, account) {
+  const el = card.querySelector('.js-alias');
+  if (el.querySelector('input')) return;
+  const input = document.createElement('input');
+  input.className = 'inline-input';
+  input.value = account.label;
+  el.textContent = '';
+  el.appendChild(input);
+  input.focus();
+  input.select();
+  const finish = () => {
+    const v = input.value.trim();
+    if (v && v !== account.label) { account.label = v; toast('已重命名'); }
+    renderAll();
+  };
+  input.addEventListener('blur', finish);
+  input.addEventListener('keydown', e => { if(e.key==='Enter') input.blur(); if(e.key==='Escape') renderAll(); });
+}
+
+function editField(row, account, key, label) {
+  const valEl = row.querySelector('.js-val');
+  if (row.querySelector('input')) return;
+  const input = document.createElement('input');
+  input.className = 'inline-input';
+  input.value = account[key] || '';
+  valEl.textContent = '';
+  valEl.appendChild(input);
+  input.focus();
+  const finish = () => {
+    const v = input.value;
+    if (v !== (account[key] || '')) { account[key] = v; toast('已保存'); }
+    renderAll();
+  };
+  input.addEventListener('blur', finish);
+  input.addEventListener('keydown', e => { if(e.key==='Enter') input.blur(); if(e.key==='Escape') renderAll(); });
+}
+
+function showTagPopover(anchor, account) {
+  document.querySelectorAll('.tag-popover-panel').forEach(p => p.remove());
+  const panel = el('div', 'tag-popover-panel');
+  panel.innerHTML = `<input type="text" placeholder="输入成员名回车..."/><div class="tag-list-popover"></div>`;
+  anchor.parentNode.appendChild(panel);
+  const input = panel.querySelector('input');
+  input.focus();
+  
+  const existing = new Set(account.tags || []);
+  const all = [...new Set(state.accounts.flatMap(a => a.tags || []))].filter(t => !existing.has(t));
+  const list = panel.querySelector('.tag-list-popover');
+  all.forEach(t => {
+    const btn = el('button', 'tag-suggest');
+    btn.textContent = t;
+    btn.onclick = () => { updateTags(account, [...(account.tags||[]), t]); closePopover(); };
+    list.appendChild(btn);
+  });
+
+  input.onkeydown = e => {
+    if (e.key === 'Enter' && input.value.trim()) {
+      updateTags(account, [...(account.tags||[]), input.value.trim()]);
+      closePopover();
+    }
+  };
+
+  const closePopover = () => panel.remove();
+  setTimeout(() => document.addEventListener('click', function close(e) {
+    if (!panel.contains(e.target) && e.target !== anchor) { closePopover(); document.removeEventListener('click', close); }
+  }), 0);
+}
+
+function updateTags(account, newTags) {
+  account.tags = newTags;
+  toast('使用成员已更新');
+  renderAll();
+}
+
+let pendingDelete = null;
+function confirmDelete(account) {
+  pendingDelete = account;
+  document.getElementById('confirmLabel').textContent = account.label;
+  document.getElementById('confirmDialog').showModal();
+}
+document.getElementById('confirmDelete').addEventListener('click', () => {
+  if (pendingDelete) {
+    state.accounts = state.accounts.filter(a => a.label !== pendingDelete.label);
+    toast('已删除');
+    renderAll();
+  }
+  document.getElementById('confirmDialog').close();
+});
+
+let activeTab = 'quick';
+document.getElementById('addBtn').addEventListener('click', () => {
+  document.getElementById('addForm').reset();
+  document.getElementById('quickStatus').classList.add('hidden');
+  setTab('quick');
+  document.getElementById('addDialog').showModal();
+});
+document.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', e => e.target.closest('dialog').close()));
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => setTab(t.dataset.tab)));
+function setTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('is-active', t.dataset.tab === tab));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('hidden', p.dataset.panel !== tab));
+}
+
+document.getElementById('addForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const submitBtn = document.getElementById('addSubmit');
+
+  if (activeTab === 'quick') {
+    const raw = document.getElementById('addQuickData').value.trim();
+    if (!raw) return toast('请输入账号数据');
+    
+    const parts = raw.split('----');
+    if (parts.length < 2) return toast('数据格式错误，请确保使用 ---- 分隔');
+
+    const email = parts[0].trim();
+    const pwd = parts[1].trim();
+    let twofa = '';
+    
+    if (parts.length >= 3) {
+      const urlMatch = parts[2].match(/(https?:\/\/[^\s]+)/);
+      twofa = urlMatch ? urlMatch[1] : parts[2].trim();
+    }
+
+    const labelInput = document.getElementById('addLabel').value.trim();
+    const label = labelInput || email.split('@')[0];
+
+    const statusEl = document.getElementById('quickStatus');
+    statusEl.classList.remove('hidden');
+    statusEl.textContent = `自动解析成功！邮箱: ${email}。正在拉起页面跳转登录...`;
+    submitBtn.disabled = true;
+
+    setTimeout(() => {
+      state.accounts.unshift({
+        label: label, email: email, googleEmail: email, googlePassword: pwd, twofaUrl: twofa,
+        tier: 'pro', five_hour: 0, seven_day: 0, tags: ['成员A'], addedAt: new Date().toISOString(), lastCheckedAt: new Date().toISOString()
+      });
+      toast('本地配置已补齐，账号已录入');
+      document.getElementById('addDialog').close();
+      submitBtn.disabled = false;
+      renderAll();
+    }, 1500);
+    return;
+  }
+  toast('已提交添加请求');
+  document.getElementById('addDialog').close();
+});
+
+document.getElementById('search').addEventListener('input', e => { state.filter.text = e.target.value.trim(); renderBoardMeta(); renderGrid(); });
+document.getElementById('sortSelect').addEventListener('change', e => { state.sort = e.target.value; renderBoardMeta(); renderGrid(); });
+document.getElementById('clearFilterBtn').addEventListener('click', () => {
+  state.filter = { text: '', tags: new Set(), status: 'all' };
+  document.getElementById('search').value = '';
+  renderAll();
+});
+
+function getVisibleAccounts() {
+  return [...state.accounts].filter(a => {
+    if (state.filter.status !== 'all' && accountStatus(a) !== state.filter.status) return false;
+    if (state.filter.tags.size && ![...state.filter.tags].every(t => (a.tags||[]).includes(t))) return false;
+    if (state.filter.text) {
+      const q = state.filter.text.toLowerCase();
+      return [a.label, a.email, a.note, ...(a.tags||[])].join(' ').toLowerCase().includes(q);
+    }
+    return true;
+  }).sort((a, b) => {
+    if (state.sort === 'recent') {
+      return new Date(b.addedAt||0) - new Date(a.addedAt||0);
+    }
+    if (state.sort === 'load') {
+      const usageA = Math.max(normalizedPercent(a.five_hour)||0, normalizedPercent(a.seven_day)||0);
+      const usageB = Math.max(normalizedPercent(b.five_hour)||0, normalizedPercent(b.seven_day)||0);
+      return usageA - usageB; // 用量越低排在越前 (剩余最多)
+    }
+    return 0;
+  });
+}
+
+function accountStatus(a) {
+  if (a.error) return 'danger';
+  const top = Math.max(normalizedPercent(a.five_hour)||0, normalizedPercent(a.seven_day)||0);
+  if (top >= 85) return 'danger';
+  if (top >= 60) return 'warn';
+  return top > 0 ? 'ok' : 'neutral';
+}
+function countStatuses(arr) {
+  const c = { ok:0, warn:0, danger:0, neutral:0 };
+  arr.forEach(a => c[accountStatus(a)]++);
+  return c;
+}
+function levelForPercent(pct) { return pct == null ? 'neutral' : (pct >= 85 ? 'danger' : (pct >= 60 ? 'warn' : 'ok')); }
+function normalizedPercent(v) { return typeof v === 'number' && !Number.isNaN(v) ? (Math.abs(v) <= 1 ? v*100 : v) : null; }
+function isRateLimitedError(a) { return !!(a.error && /(?:^|\D)429(?:\D|$)/.test(a.error)); }
+function formatTier(t) { return t === 'free' ? 'Free' : (t === 'pro' ? 'Pro' : t); }
+function formatNum(n) { return typeof n === 'number' ? n.toLocaleString() : '-'; }
+function missingVaultFields(a) { return ['googleEmail', 'googlePassword', 'twofaUrl'].filter(k => !(a[k]||'').trim()); }
+
+function getNextResetAcross(arr) {
+  const t = Date.now();
+  const resets = arr.flatMap(a => [
+    { a, l: '5h', ts: Date.parse(a.five_hour_resets), iso: a.five_hour_resets },
+    { a, l: '7d', ts: Date.parse(a.seven_day_resets), iso: a.seven_day_resets }
+  ]).filter(x => x.ts > t).sort((x, y) => x.ts - y.ts);
+  return resets.length ? { account: resets[0].a, label: resets[0].l, iso: resets[0].iso } : null;
+}
+
+function formatDate(iso) { return iso ? new Date(iso).toLocaleDateString() : '-'; }
+function formatDateTime(iso) {
+  if (!iso) return '-';
+  return new Date(iso).toLocaleString('zh-CN', {
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+}
+function relativeTime(iso, future=false) {
+  if (!iso) return '-';
+  const diff = Math.abs(Date.now() - new Date(iso).getTime());
+  const m = Math.floor(diff/60000);
+  if (m < 60) return future ? `${m}分钟后` : `${m}分钟前`;
+  const h = Math.floor(m/60);
+  if (h < 24) return future ? `${h}小时后` : `${h}小时前`;
+  return future ? `${Math.floor(h/24)}天后` : `${Math.floor(h/24)}天前`;
+}
+
+// 格式化为紧凑时间，例如 "1h5m" 或 "6d1h"
+function formatCompactTime(iso) {
+  if (!iso) return '-';
+  const diff = Date.parse(iso) - Date.now();
+  if (Number.isNaN(diff) || diff <= 0) return '-';
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  if (d > 0) return `${d}d${h}h`;
+  if (h > 0) return `${h}h${m}m`;
+  return Math.max(1, m) + 'm'; 
+}
+
+function el(tag, cls) { const e = document.createElement(tag); if(cls) e.className = cls; return e; }
+function toDomId(l) { return 'acct-' + (l||'').replace(/[^a-zA-Z0-9]/g, '-'); }
+function escapeHtml(s) { return String(s||'').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function escapeAttr(s) { return escapeHtml(s); }
+
+initTheme();
+initCooldown();
+fetchAccounts();
+</script>
+</body>
+</html>

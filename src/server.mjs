@@ -100,6 +100,24 @@ async function collect(acct, store) {
   }
 }
 
+function findEmailDupe(store, email, exceptLabel = null) {
+  if (!email) return null
+  const needle = String(email).trim().toLowerCase()
+  for (const [k, a] of Object.entries(store.accounts)) {
+    if (k === exceptLabel) continue
+    if (a.email && String(a.email).trim().toLowerCase() === needle) return k
+  }
+  return null
+}
+
+function autoLabel(store, hint = '') {
+  const base = (hint || 'acct').replace(/[^a-zA-Z0-9._-]/g, '-').slice(0, 40) || 'acct'
+  if (!store.accounts[base]) return base
+  let i = 2
+  while (store.accounts[`${base}-${i}`]) i++
+  return `${base}-${i}`
+}
+
 async function hydrateProfile(acct) {
   try {
     const p = await fetchProfile(acct.accessToken)
@@ -176,45 +194,59 @@ async function handleList(req, res) {
 }
 
 async function handleImportLocal(req, res, _, body) {
-  const { label } = body
-  if (!label) return json(res, { error: 'label required' }, 400)
   const raw = await fs.readFile(path.join(process.env.HOME, '.claude/.credentials.json'), 'utf8')
   const c = JSON.parse(raw).claudeAiOauth
   if (!c?.refreshToken) return json(res, { error: 'no claudeAiOauth.refreshToken in credentials file' }, 400)
 
   const store = await loadStore()
-  if (store.accounts[label]) return json(res, { error: `label "${label}" already exists` }, 409)
-  const acct = emptyAccount(label)
+  const tmpLabel = `__tmp_${randomBytes(4).toString('hex')}`
+  const acct = emptyAccount(tmpLabel)
   acct.accessToken = c.accessToken ?? null
   acct.refreshToken = c.refreshToken
   acct.expiresAt = c.expiresAt ?? 0
   acct.scopes = c.scopes ?? []
   await ensureFreshToken(acct)
   await hydrateProfile(acct)
-  store.accounts[label] = acct
+
+  const dupe = findEmailDupe(store, acct.email)
+  if (dupe) return json(res, { error: `该账号已存在 (${acct.email},别名 "${dupe}")`, existingLabel: dupe }, 409)
+
+  const finalLabel = (body.label && body.label.trim()) || autoLabel(store, acct.email?.split('@')[0])
+  if (store.accounts[finalLabel]) return json(res, { error: `别名 "${finalLabel}" 已被占用` }, 409)
+  acct.label = finalLabel
+  store.accounts[finalLabel] = acct
   await saveStore(store)
   json(res, await collect(acct, store))
 }
 
 async function handleImportToken(req, res, _, body) {
-  const { label, refreshToken } = body
-  if (!label || !refreshToken) return json(res, { error: 'label and refreshToken required' }, 400)
+  const { refreshToken } = body
+  if (!refreshToken) return json(res, { error: 'refreshToken required' }, 400)
   const store = await loadStore()
-  if (store.accounts[label]) return json(res, { error: `label "${label}" already exists` }, 409)
-  const acct = emptyAccount(label)
+
+  const tmpLabel = `__tmp_${randomBytes(4).toString('hex')}`
+  const acct = emptyAccount(tmpLabel)
   acct.refreshToken = refreshToken
   await ensureFreshToken(acct)
   await hydrateProfile(acct)
-  store.accounts[label] = acct
+
+  const dupe = findEmailDupe(store, acct.email)
+  if (dupe) return json(res, { error: `该账号已存在 (${acct.email},别名 "${dupe}")`, existingLabel: dupe }, 409)
+
+  const finalLabel = (body.label && body.label.trim()) || autoLabel(store, acct.email?.split('@')[0])
+  if (store.accounts[finalLabel]) return json(res, { error: `别名 "${finalLabel}" 已被占用` }, 409)
+  acct.label = finalLabel
+  store.accounts[finalLabel] = acct
   await saveStore(store)
   json(res, await collect(acct, store))
 }
 
 async function handleLoginStart(req, res, _, body) {
-  const { label } = body
-  if (!label) return json(res, { error: 'label required' }, 400)
   const store = await loadStore()
-  if (store.accounts[label]) return json(res, { error: `label "${label}" already exists` }, 409)
+  const labelHint = body.label && String(body.label).trim()
+  if (labelHint && store.accounts[labelHint]) {
+    return json(res, { error: `别名 "${labelHint}" 已被占用` }, 409)
+  }
 
   const sessionId = randomBytes(16).toString('hex')
   const session = { status: 'pending', authUrl: null, result: null, error: null }
@@ -223,14 +255,26 @@ async function handleLoginStart(req, res, _, body) {
   runLoginFlow({ onOpen: u => { session.authUrl = u } })
     .then(async tokens => {
       const s = await loadStore()
-      if (s.accounts[label]) {
-        session.status = 'error'; session.error = `label "${label}" taken`
-        return
-      }
-      const acct = emptyAccount(label)
+      const tmpLabel = `__tmp_${randomBytes(4).toString('hex')}`
+      const acct = emptyAccount(tmpLabel)
       Object.assign(acct, tokens)
       await hydrateProfile(acct)
-      s.accounts[label] = acct
+
+      const dupe = findEmailDupe(s, acct.email)
+      if (dupe) {
+        session.status = 'error'
+        session.error = `该账号已存在 (${acct.email},别名 "${dupe}")`
+        return
+      }
+
+      const finalLabel = labelHint || autoLabel(s, acct.email?.split('@')[0])
+      if (s.accounts[finalLabel]) {
+        session.status = 'error'
+        session.error = `别名 "${finalLabel}" 已被占用`
+        return
+      }
+      acct.label = finalLabel
+      s.accounts[finalLabel] = acct
       await saveStore(s)
       session.status = 'done'
       session.result = await collect(acct, { __dirty: false })

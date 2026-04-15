@@ -86,7 +86,7 @@ export function buildAuthUrl({ codeChallenge, state, port }) {
   return url.toString()
 }
 
-export async function runLoginFlow({ onOpen } = {}) {
+export async function runLoginFlow({ onOpen, skipOpen = false } = {}) {
   const verifier  = genVerifier()
   const challenge = genChallenge(verifier)
   const state     = genState()
@@ -94,7 +94,7 @@ export async function runLoginFlow({ onOpen } = {}) {
   const { server, port, once } = await listenOnce()
   const authUrl = buildAuthUrl({ codeChallenge: challenge, state, port })
   onOpen?.(authUrl)
-  tryOpenBrowser(authUrl)
+  if (!skipOpen) tryOpenBrowser(authUrl)
 
   const { code, returnedState } = await once
   server.close()

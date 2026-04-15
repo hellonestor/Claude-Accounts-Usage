@@ -1,14 +1,116 @@
 {
   "name": "claude-accounts",
+  "productName": "Claude 账号工作台",
   "version": "0.1.0",
   "description": "Manage multiple Claude (Pro/Max) accounts and query 5h/7d usage from one place.",
   "private": true,
   "type": "module",
+  "main": "src/electron/main.mjs",
   "bin": {
     "claude-accounts": "./bin/claude-accounts.mjs"
   },
   "engines": { "node": ">=18" },
   "scripts": {
-    "start": "node ./bin/claude-accounts.mjs"
+    "start": "node ./bin/claude-accounts.mjs",
+    "serve": "node ./bin/claude-accounts.mjs serve",
+    "electron:dev": "electron .",
+    "build": "bash scripts/build.sh",
+    "build:linux": "bash scripts/build.sh linux",
+    "build:mac": "bash scripts/build.sh mac",
+    "build:win": "bash scripts/build.sh win",
+    "dist": "electron-builder --publish=never",
+    "dist:linux": "electron-builder --linux --publish=never",
+    "dist:mac": "electron-builder --mac --publish=never",
+    "dist:win": "electron-builder --win --publish=never",
+    "release": "electron-builder --publish=always"
+  },
+  "devDependencies": {
+    "electron": "^32.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  },
+  "build": {
+    "appId": "cn.claude.accounts",
+    "productName": "Claude 账号工作台",
+    "asar": true,
+    "copyright": "Copyright © 2026",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "bin/**/*",
+      "src/**/*",
+      "data/claude.svg",
+      "package.json",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,example,examples,*.d.ts}",
+      "!**/node_modules/.bin",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln}",
+      "!.editorconfig",
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitattributes,.gitignore,.gitkeep}"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "hellonestor",
+        "repo": "Claude-Accounts-Usage",
+        "releaseType": "release"
+      }
+    ],
+    "linux": {
+      "target": [
+        { "target": "AppImage", "arch": ["x64"] },
+        { "target": "deb", "arch": ["x64"] }
+      ],
+      "category": "Utility",
+      "maintainer": "claude-accounts contributors",
+      "synopsis": "Claude 账号工作台",
+      "description": "Manage multiple Claude (Pro/Max) accounts and query 5h/7d usage from one place.",
+      "icon": "build/icon.png"
+    },
+    "appImage": {
+      "artifactName": "${productName}-${version}-${arch}.AppImage"
+    },
+    "deb": {
+      "artifactName": "${productName}_${version}_${arch}.deb",
+      "depends": ["libgtk-3-0", "libnotify4", "libnss3", "libxss1", "libxtst6", "xdg-utils", "libatspi2.0-0", "libuuid1", "libsecret-1-0"]
+    },
+    "mac": {
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] },
+        { "target": "zip", "arch": ["x64", "arm64"] }
+      ],
+      "category": "public.app-category.developer-tools",
+      "icon": "build/icon.icns",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "identity": null
+    },
+    "dmg": {
+      "artifactName": "${productName}-${version}-${arch}.dmg"
+    },
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "Claude 账号工作台",
+      "artifactName": "${productName}-Setup-${version}.exe"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.exe"
+    }
   }
 }

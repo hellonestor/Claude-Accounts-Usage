@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <title>Claude 账号工作台</title>
 <style>
 /* 极简主义主题与重置 */
@@ -737,6 +738,17 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); }
       <span class="banner-dot"></span>
       <div>当前为缓存模式，页面展示的是最近一次的抓取结果。</div>
     </div>
+    <div id="bannerUpdate" class="banner banner-info hidden">
+      <span class="banner-dot"></span>
+      <div>发现新版本 <strong id="bannerUpdateVer"></strong>，正在后台下载,完成后将提示重启安装。</div>
+    </div>
+    <script>
+      window.addEventListener('app-update-available', (e) => {
+        const v = e.detail?.version || '';
+        document.getElementById('bannerUpdateVer').textContent = v ? 'v' + v : '';
+        document.getElementById('bannerUpdate').classList.remove('hidden');
+      });
+    </script>
 
     <div class="workspace">
       <aside class="sidebar">
@@ -1086,7 +1098,7 @@ function createCard(account) {
   
   const reset5h = formatCompactTime(account.five_hour_resets);
   const reset7d = formatCompactTime(account.seven_day_resets);
-  const resetDisplay = (reset5h === '-' && reset7d === '-') ? '-' : `${reset5h} / ${reset7d}`;
+  const resetDisplay = (reset5h === '-' && reset7d === '-') ? '-' : `${reset5h}/${reset7d}`;
   
   const tagsHtml = (account.tags || []).map(t => `<span class="member-tag">${escapeHtml(t)} <span class="member-tag-rm" data-tag="${escapeAttr(t)}">✕</span></span>`).join('');
   

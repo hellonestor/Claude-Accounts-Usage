@@ -581,9 +581,12 @@ a:hover { color: var(--text-muted); }
   border-radius: 6px;
   border: 1px solid var(--border);
   white-space: pre-wrap;
+  word-break: break-all;
   min-height: 48px;
   margin-top: 0.5rem;
+  cursor: text;
 }
+.note-display:hover { border-color: var(--text-subtle); }
 .note-input {
   width: 100%;
   min-height: 60px;
@@ -896,19 +899,13 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); }
                 <div class="method-desc">读取 ~/.claude/.credentials.json 的登录态</div>
               </div>
             </label>
-            <label class="method-card">
-              <input type="radio" name="addMethod" value="token">
-              <div>
-                <div class="method-title">粘贴 refresh token</div>
-                <div class="method-desc">从别处拿到的 refresh token 直接导入</div>
-              </div>
-            </label>
           </div>
         </div>
 
-        <div class="form-group hidden" id="tokenInputWrap">
-          <label>Refresh Token</label>
-          <textarea id="addToken" placeholder="粘贴完整的 refresh token..." rows="3"></textarea>
+        <div class="form-group" id="credNoteWrap">
+          <label>账号凭据备忘录<span class="form-hint-inline"> (选填,粘贴后自动识别邮箱/密码/2FA)</span></label>
+          <textarea id="addCredNote" rows="3" placeholder="示例:&#10;example@gmail.com----password123----https://2fa.example.com/xxxx&#10;&#10;也可直接粘贴,系统会自动分离成 邮箱 / 密码 / 2FA 网址,仅本地保存作为备忘,不会自动登录。"></textarea>
+          <div id="credParsePreview" class="form-hint" style="display:none;"></div>
         </div>
 
         <div id="loginStatus" class="form-hint hidden" style="margin-top:0.4rem;"></div>
@@ -1228,7 +1225,7 @@ function createCard(account) {
     else state.expandedCards.delete(account.label);
   };
   card.addEventListener('click', (e) => {
-    if (e.target.closest('button, a, input, textarea, select, .member-tag-rm, .tag-popover-panel')) return;
+    if (e.target.closest('button, a, input, textarea, select, .member-tag-rm, .tag-popover-panel, .note-item, .vault-value, .vault-item')) return;
     toggleCardExpanded();
   });
   
@@ -1313,20 +1310,40 @@ function createCard(account) {
     </div>
     <div class="note-display js-note-text">${escapeHtml(account.note || '暂无内容...')}</div>
   `;
-  noteRow.querySelector('.js-edit-note').addEventListener('click', () => {
+  const beginEdit = () => {
     const display = noteRow.querySelector('.js-note-text');
-    if(noteRow.querySelector('textarea')) return;
+    if (!display || noteRow.querySelector('textarea')) return;
     const ta = el('textarea', 'note-input');
     ta.value = account.note || '';
+    ta.rows = Math.max(3, (account.note || '').split('\n').length);
     noteRow.replaceChild(ta, display);
     ta.focus();
-    const finish = () => {
-      account.note = ta.value;
-      toast('备注已保存');
-      renderAll(); 
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+    let saving = false;
+    const finish = async () => {
+      if (saving) return; saving = true;
+      const newVal = ta.value;
+      if (newVal === (account.note || '')) { renderAll(); return; }
+      try {
+        await apiJson('/api/accounts/' + encodeURIComponent(account.label), {
+          method: 'PATCH',
+          body: JSON.stringify({ note: newVal }),
+        });
+        account.note = newVal;
+        toast('备注已保存');
+      } catch (err) {
+        toast('保存失败: ' + err.message);
+      }
+      renderAll();
     };
     ta.addEventListener('blur', finish);
-  });
+    ta.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { e.stopPropagation(); ta.value = account.note || ''; ta.blur(); }
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); ta.blur(); }
+    });
+  };
+  noteRow.querySelector('.js-edit-note').addEventListener('click', beginEdit);
+  noteRow.querySelector('.js-note-text').addEventListener('click', beginEdit);
   vaultDiv.appendChild(noteRow);
 
   // Footer inside expandable
@@ -1462,8 +1479,51 @@ function updateMethodSelection() {
   document.querySelectorAll('.method-card').forEach(c => {
     c.classList.toggle('is-selected', c.querySelector('input').value === method);
   });
-  document.getElementById('tokenInputWrap').classList.toggle('hidden', method !== 'token');
 }
+
+function parseCredential(raw) {
+  if (!raw) return null;
+  const text = raw.trim();
+  if (!text) return null;
+  const parts = text.split(/----|\s*\|\s*|\t+|\n+/).map(s => s.trim()).filter(Boolean);
+  const out = { email: '', password: '', twofa: '', raw: text };
+  for (const p of parts) {
+    const m = p.match(/(https?:\/\/\S+)/);
+    if (m && !out.twofa) { out.twofa = m[1]; continue; }
+    if (/两步验证|2fa|验证码/i.test(p)) {
+      const u = p.match(/(https?:\/\/\S+)/);
+      if (u && !out.twofa) out.twofa = u[1];
+      continue;
+    }
+    if (!out.email && /@/.test(p)) { out.email = p; continue; }
+    if (!out.password) { out.password = p; continue; }
+  }
+  return out;
+}
+
+function formatCredNote(parsed) {
+  if (!parsed) return '';
+  const lines = [];
+  if (parsed.email)    lines.push('邮箱: ' + parsed.email);
+  if (parsed.password) lines.push('密码: ' + parsed.password);
+  if (parsed.twofa)    lines.push('2FA:  ' + parsed.twofa);
+  return lines.length ? lines.join('\n') : parsed.raw;
+}
+
+document.getElementById('addCredNote')?.addEventListener('input', e => {
+  const preview = document.getElementById('credParsePreview');
+  const p = parseCredential(e.target.value);
+  if (p && (p.email || p.password || p.twofa)) {
+    const bits = [];
+    if (p.email)    bits.push('邮箱 ' + p.email);
+    if (p.password) bits.push('密码 ' + '•'.repeat(Math.min(p.password.length, 8)));
+    if (p.twofa)    bits.push('2FA ✓');
+    preview.style.display = '';
+    preview.textContent = '已识别: ' + bits.join(' · ');
+  } else {
+    preview.style.display = 'none';
+  }
+});
 
 let loginPollTimer = null;
 function stopLoginPoll() { if (loginPollTimer) { clearInterval(loginPollTimer); loginPollTimer = null; } }
@@ -1480,6 +1540,9 @@ document.getElementById('addForm').addEventListener('submit', async e => {
   const submitBtn = document.getElementById('addSubmit');
   const method = getAddMethod();
   const label = document.getElementById('addLabel').value.trim();
+  const credRaw = document.getElementById('addCredNote')?.value || '';
+  const credParsed = parseCredential(credRaw);
+  const note = formatCredNote(credParsed);
   const status = document.getElementById('loginStatus');
   status.className = 'form-hint';
   status.classList.remove('hidden');
@@ -1490,7 +1553,7 @@ document.getElementById('addForm').addEventListener('submit', async e => {
       status.textContent = '正在启动浏览器 OAuth 流程...';
       const { sessionId } = await apiJson('/api/accounts/login/start', {
         method: 'POST',
-        body: JSON.stringify({ label: label || undefined }),
+        body: JSON.stringify({ label: label || undefined, note: note || undefined }),
       });
       status.textContent = '已请求,等待服务端打开授权页面...';
       stopLoginPoll();
@@ -1526,20 +1589,9 @@ document.getElementById('addForm').addEventListener('submit', async e => {
       status.textContent = '读取 ~/.claude/.credentials.json ...';
       const acct = await apiJson('/api/accounts/import-local', {
         method: 'POST',
-        body: JSON.stringify({ label: label || undefined }),
+        body: JSON.stringify({ label: label || undefined, note: note || undefined }),
       });
       toast('已从本机导入: ' + (acct.email || acct.label));
-      document.getElementById('addDialog').close();
-      fetchAccounts();
-    } else {
-      const rt = document.getElementById('addToken').value.trim();
-      if (!rt) { status.style.color = 'var(--danger)'; status.textContent = '请粘贴 refresh token'; submitBtn.disabled = false; return; }
-      status.textContent = '正在验证 token ...';
-      const acct = await apiJson('/api/accounts/import-token', {
-        method: 'POST',
-        body: JSON.stringify({ label: label || undefined, refreshToken: rt }),
-      });
-      toast('已导入: ' + (acct.email || acct.label));
       document.getElementById('addDialog').close();
       fetchAccounts();
     }

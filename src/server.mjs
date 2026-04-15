@@ -214,6 +214,7 @@ async function handleImportLocal(req, res, _, body) {
   const finalLabel = (body.label && body.label.trim()) || autoLabel(store, acct.email?.split('@')[0])
   if (store.accounts[finalLabel]) return json(res, { error: `别名 "${finalLabel}" 已被占用` }, 409)
   acct.label = finalLabel
+  if (body.note) acct.note = String(body.note)
   store.accounts[finalLabel] = acct
   await saveStore(store)
   json(res, await collect(acct, store))
@@ -274,6 +275,7 @@ async function handleLoginStart(req, res, _, body) {
         return
       }
       acct.label = finalLabel
+      if (body.note) acct.note = String(body.note)
       s.accounts[finalLabel] = acct
       await saveStore(s)
       session.status = 'done'

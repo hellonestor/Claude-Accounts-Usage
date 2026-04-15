@@ -31,7 +31,7 @@ async function createWindow() {
   serverPort = await pickFreePort()
   await startServer({ host: '127.0.0.1', port: serverPort })
 
-  const iconPath = path.join(PROJECT_ROOT, 'data', 'claude.svg')
+  const iconPath = path.join(PROJECT_ROOT, 'data', 'claudecode.png')
   const icon = nativeImage.createFromPath(iconPath)
 
   mainWindow = new BrowserWindow({

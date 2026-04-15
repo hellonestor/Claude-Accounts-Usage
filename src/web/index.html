@@ -662,13 +662,16 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); }
 .method-card:hover { border-color: var(--text-subtle); background: var(--bg); }
 .method-card input[type="radio"] {
   appearance: none; -webkit-appearance: none;
+  box-sizing: border-box;
   width: 16px; height: 16px;
+  padding: 0;
   border: 1.5px solid var(--text-subtle);
   border-radius: 50%;
   margin-top: 0.25rem;
   flex-shrink: 0;
   cursor: pointer;
   position: relative;
+  background: transparent;
   transition: border-color 0.15s;
 }
 .method-card input[type="radio"]:checked { border-color: var(--text); }

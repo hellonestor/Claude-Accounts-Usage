@@ -252,7 +252,7 @@ async function handleLoginStart(req, res, _, body) {
   const session = { status: 'pending', authUrl: null, result: null, error: null }
   pendingLogins.set(sessionId, session)
 
-  runLoginFlow({ onOpen: u => { session.authUrl = u } })
+  runLoginFlow({ skipOpen: true, onOpen: u => { session.authUrl = u } })
     .then(async tokens => {
       const s = await loadStore()
       const tmpLabel = `__tmp_${randomBytes(4).toString('hex')}`

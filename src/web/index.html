@@ -905,8 +905,7 @@ const COOLDOWN_MS = 5 * 60 * 1000;
 const STATUS_META = {
   all: { label: '全部状态' },
   ok: { label: '正常', className: 'ok' },
-  warn: { label: '负载偏高', className: 'warn' },
-  danger: { label: '临界高危', className: 'danger' },
+  warn: { label: '高负载', className: 'warn' },
   neutral: { label: '无数据', className: 'neutral' },
 };
 
@@ -1036,7 +1035,7 @@ function renderAll() {
 
 function renderStatusFilter() {
   const counts = countStatuses(state.accounts);
-  const entries = [['all', state.accounts.length], ['danger', counts.danger], ['warn', counts.warn], ['ok', counts.ok], ['neutral', counts.neutral]];
+  const entries = [['all', state.accounts.length], ['warn', counts.warn], ['ok', counts.ok], ['neutral', counts.neutral]];
   document.getElementById('statusFilter').innerHTML = entries.map(([k, c]) => `
     <button class="filter-btn ${state.filter.status === k ? 'is-active' : ''}" data-status="${k}">
       <span>${STATUS_META[k].label}</span>
@@ -1450,18 +1449,17 @@ function getVisibleAccounts() {
 }
 
 function accountStatus(a) {
-  if (a.error) return 'danger';
+  if (a.error) return 'warn';
   const top = Math.max(normalizedPercent(a.five_hour)||0, normalizedPercent(a.seven_day)||0);
-  if (top >= 85) return 'danger';
   if (top >= 60) return 'warn';
   return top > 0 ? 'ok' : 'neutral';
 }
 function countStatuses(arr) {
-  const c = { ok:0, warn:0, danger:0, neutral:0 };
+  const c = { ok:0, warn:0, neutral:0 };
   arr.forEach(a => c[accountStatus(a)]++);
   return c;
 }
-function levelForPercent(pct) { return pct == null ? 'neutral' : (pct >= 85 ? 'danger' : (pct >= 60 ? 'warn' : 'ok')); }
+function levelForPercent(pct) { return pct == null ? 'neutral' : (pct >= 60 ? 'warn' : 'ok'); }
 function normalizedPercent(v) { return typeof v === 'number' && !Number.isNaN(v) ? (Math.abs(v) <= 1 ? v*100 : v) : null; }
 function isRateLimitedError(a) { return !!(a.error && /(?:^|\D)429(?:\D|$)/.test(a.error)); }
 function formatTier(t) { return t === 'free' ? 'Free' : (t === 'pro' ? 'Pro' : t); }

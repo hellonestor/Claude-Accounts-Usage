@@ -3,3 +3,12 @@ data/accounts.json
 data/*.json
 *.log
 .DS_Store
+
+# electron-builder 产物
+dist/
+build/icon.png
+build/icon.ico
+build/icon.icns
+
+# 其他
+package-lock.json

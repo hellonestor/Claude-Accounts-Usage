@@ -1,0 +1,103 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "发布到 GitHub Releases (true/false)"
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install linux icon tools
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y librsvg2-bin imagemagick
+
+      - name: Rasterize icon (linux/mac)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          mkdir -p build
+          if [ -f data/claude.svg ] && [ ! -f build/icon.png ]; then
+            if command -v rsvg-convert >/dev/null 2>&1; then
+              rsvg-convert -w 1024 -h 1024 data/claude.svg -o build/icon.png
+            elif command -v magick >/dev/null 2>&1; then
+              magick -background none data/claude.svg -resize 1024x1024 build/icon.png
+            fi
+          fi
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'true' }}" = "true" ]; then
+            npx electron-builder --linux --publish=always
+          else
+            npm run dist:linux
+          fi
+
+      - name: Build (macOS)
+        if: matrix.os == 'macos-latest'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          if [ "${{ startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'true' }}" = "true" ]; then
+            npx electron-builder --mac --publish=always
+          else
+            npm run dist:mac
+          fi
+
+      - name: Build (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ("${{ startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'true' }}" -eq "true") {
+            npx electron-builder --win --publish=always
+          } else {
+            npm run dist:win
+          }
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}-dist
+          path: |
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.dmg
+            dist/*.zip
+            dist/*.exe
+            dist/latest*.yml
+          if-no-files-found: ignore
+          retention-days: 14

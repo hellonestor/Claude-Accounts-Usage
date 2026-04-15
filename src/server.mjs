@@ -12,6 +12,7 @@ import {
 
 const __filename = fileURLToPath(import.meta.url)
 const WEB_DIR = path.join(path.dirname(__filename), 'web')
+const DATA_DIR = path.join(path.dirname(__filename), '..', 'data')
 
 const pendingLogins = new Map()
 
@@ -147,6 +148,7 @@ async function sendFile(res, file, type) {
 
 const routes = [
   ['GET',    /^\/$/,                             handleIndex],
+  ['GET',    /^\/favicon\.svg$/,                 handleFavicon],
   ['GET',    /^\/api\/accounts$/,                handleList],
   ['POST',   /^\/api\/accounts\/import-local$/,  handleImportLocal],
   ['POST',   /^\/api\/accounts\/import-token$/,  handleImportToken],
@@ -159,6 +161,10 @@ const routes = [
 
 async function handleIndex(req, res) {
   return sendFile(res, path.join(WEB_DIR, 'index.html'), 'text/html; charset=utf-8')
+}
+
+async function handleFavicon(req, res) {
+  return sendFile(res, path.join(DATA_DIR, 'claude.svg'), 'image/svg+xml; charset=utf-8')
 }
 
 async function handleList(req, res) {
@@ -291,7 +297,14 @@ export function startServer({ port = 7789, host = '127.0.0.1' } = {}) {
     }
     res.statusCode = 404; res.end('not found')
   })
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
+    server.once('error', err => {
+      if (err?.code === 'EADDRINUSE') {
+        reject(new Error(`port ${port} is already in use on ${host}; try --port <N>`))
+        return
+      }
+      reject(err)
+    })
     server.listen(port, host, () => {
       const addr = server.address()
       console.error(`claude-accounts web ready → http://${host}:${addr.port}`)

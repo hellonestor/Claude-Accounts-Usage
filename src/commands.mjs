@@ -1,4 +1,5 @@
 import { promises as fs } from 'node:fs'
+import http from 'node:http'
 import path from 'node:path'
 import os from 'node:os'
 import readline from 'node:readline/promises'
@@ -136,11 +137,57 @@ export async function watch(args) {
 
 export async function where() { console.log(STORE_PATH) }
 
+function probeHealth(host, port) {
+  return new Promise(resolve => {
+    const req = http.get({
+      host,
+      port,
+      path: '/api/health',
+      timeout: 1500,
+    }, res => {
+      const chunks = []
+      res.on('data', c => chunks.push(c))
+      res.on('end', () => {
+        try {
+          const body = Buffer.concat(chunks).toString('utf8')
+          resolve({
+            reachable: true,
+            statusCode: res.statusCode,
+            body: JSON.parse(body),
+          })
+        } catch {
+          resolve({ reachable: true, statusCode: res.statusCode, body: null })
+        }
+      })
+    })
+    req.on('timeout', () => req.destroy(new Error('timeout')))
+    req.on('error', err => {
+      if (['ECONNREFUSED', 'EHOSTUNREACH', 'ETIMEDOUT'].includes(err.code)) {
+        resolve({ reachable: false, error: err })
+        return
+      }
+      resolve({ reachable: true, error: err })
+    })
+  })
+}
+
 export async function serve(args) {
   const { startServer } = await import('./server.mjs')
   const i = args.indexOf('--port')
   const port = i >= 0 ? Number(args[i + 1]) : 7789
   const hIdx = args.indexOf('--host')
   const host = hIdx >= 0 ? args[hIdx + 1] : '127.0.0.1'
+  const probe = await probeHealth(host, port)
+
+  if (probe.reachable && probe.statusCode === 200 && probe.body?.ok) {
+    console.error(`claude-accounts web already running → http://${host}:${port}`)
+    console.error(`store: ${probe.body.store ?? STORE_PATH}`)
+    return
+  }
+
+  if (probe.reachable) {
+    throw new Error(`port ${port} is already in use on ${host}; try --port <N>`)
+  }
+
   await startServer({ port, host })
 }

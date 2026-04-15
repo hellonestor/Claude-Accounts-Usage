@@ -1,7 +1,7 @@
 {
   "name": "claude-accounts",
   "productName": "Claude 账号工作台",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Manage multiple Claude (Pro/Max) accounts and query 5h/7d usage from one place.",
   "private": true,
   "type": "module",
@@ -74,10 +74,10 @@
       "icon": "build/icon.png"
     },
     "appImage": {
-      "artifactName": "${productName}-${version}-${arch}.AppImage"
+      "artifactName": "claude-accounts-${version}-${arch}.AppImage"
     },
     "deb": {
-      "artifactName": "${productName}_${version}_${arch}.deb",
+      "artifactName": "claude-accounts_${version}_${arch}.deb",
       "depends": ["libgtk-3-0", "libnotify4", "libnss3", "libxss1", "libxtst6", "xdg-utils", "libatspi2.0-0", "libuuid1", "libsecret-1-0"]
     },
     "mac": {
@@ -89,10 +89,11 @@
       "icon": "build/icon.icns",
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
-      "identity": null
+      "identity": null,
+      "artifactName": "claude-accounts-${version}-${arch}.${ext}"
     },
     "dmg": {
-      "artifactName": "${productName}-${version}-${arch}.dmg"
+      "artifactName": "claude-accounts-${version}-${arch}.dmg"
     },
     "win": {
       "target": [
@@ -108,10 +109,10 @@
       "createDesktopShortcut": "always",
       "createStartMenuShortcut": true,
       "shortcutName": "Claude 账号工作台",
-      "artifactName": "${productName}-Setup-${version}.exe"
+      "artifactName": "claude-accounts-Setup-${version}.exe"
     },
     "portable": {
-      "artifactName": "${productName}-${version}-portable.exe"
+      "artifactName": "claude-accounts-${version}-portable.exe"
     }
   }
 }
